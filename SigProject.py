@@ -117,7 +117,7 @@ def tune_and_evaluate(X_trainval, y_trainval, inner_folds):
     }
 
     grid = GridSearchCV(
-        estimator=RandomForestClassifier(random_state=42),
+        estimator=RandomForestClassifier(random_state=42,class_weight="balanced"),
         param_grid=param_grid,
         cv=inner_folds,
         scoring="f1",
@@ -133,8 +133,6 @@ def tune_and_evaluate(X_trainval, y_trainval, inner_folds):
 def evaluate_final_model(model, X_test, y_test, feature_names):
     test_pred = model.predict(X_test)
     test_proba = model.predict_proba(X_test)[:, 1]
-
-    print("\n===== FINAL TEST SET PERFORMANCE =====")
     print(f"Accuracy:  {accuracy_score(y_test, test_pred):.4f}")
     print(f"Precision: {precision_score(y_test, test_pred):.4f}")
     print(f"Recall:    {recall_score(y_test, test_pred):.4f}")
@@ -144,7 +142,7 @@ def evaluate_final_model(model, X_test, y_test, feature_names):
     print("\nConfusion matrix (rows=actual, cols=predicted):")
     print(confusion_matrix(y_test, test_pred))
     print("\nClassification report:")
-    print(classification_report(y_test, test_pred, target_names=["No Flood", "Flood"]))
+    print(classification_report(y_test, test_pred, target_names=["No Erosion", "Erosion"]))
 
     print("\nFeature importances:")
     for name, imp in sorted(zip(feature_names, model.feature_importances_), key=lambda x: -x[1]):
@@ -166,11 +164,9 @@ if __name__ == "__main__":
     best_model, best_params = tune_and_evaluate(X_trainval, y_trainval, inner_folds)
     evaluate_final_model(best_model, X_test, y_test, predictor_cols)
 
-    # ---- Save the trained model ----
     joblib.dump(best_model, "flood_rf_model.joblib")
     print("\nSaved model -> flood_rf_model.joblib")
 
-    # ---- Predict across the FULL raster (not just ROI/test pixels) ----
     n_bands = len(BAND_NAMES)
     X_all = raster.values.reshape(n_bands, -1).T
     df_all = pd.DataFrame(X_all, columns=BAND_NAMES)
@@ -194,7 +190,5 @@ if __name__ == "__main__":
     with rasterio.open("erosion_susceptibility.tif", "w", dtype="float32", nodata=-1.0, **out_meta) as dst:
         dst.write(pred_proba_map, 1)
 
-    print("Saved -> erosion_susceptibility_class.tif (0=no-erosion, 1=erosion, 255=nodata)")
-    print("Saved -> erosion_susceptibility.tif (erosion probability 0-1, -1=nodata)")
     print(f"erosion_susceptibility pixels: {(pred_class_map == 1).sum()}, "
           f"non-erosion: {(pred_class_map == 0).sum()}")

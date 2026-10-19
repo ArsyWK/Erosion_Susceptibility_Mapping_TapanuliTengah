@@ -66,7 +66,6 @@ def main():
     results = {}
     for band in PREDICTOR_BANDS:
         values = df[band].values.astype(float)
-        print(f"Fitting variogram for '{band}' ...")
         try:
             fitted_range, V = fit_variogram_range(
                 values, coords, SAMPLE_SIZE, MODEL, N_LAGS, MAXLAG, RANDOM_STATE
@@ -75,29 +74,21 @@ def main():
             print(f"  range: {fitted_range:8.1f} m   sill: {V.parameters[1]:.4f}   "
                   f"nugget: {V.parameters[2]:.4f}   rmse: {V.rmse:.4f}")
         except Exception as e:
-            print(f"  WARNING: variogram fit failed for '{band}': {e}")
+            print(f"variogram fit failed'{band}',{e}")
 
     if not results:
-        raise RuntimeError("No variograms could be fit -- check your data and band names.")
+        raise RuntimeError("No variograms ")
 
     ranges = np.array(list(results.values()))
     median_range = float(np.median(ranges))
     max_range = float(np.max(ranges))
     max_band = max(results, key=results.get)
 
-    print("\n===== VARIOGRAM RANGE SUMMARY =====")
     for band, r in sorted(results.items(), key=lambda kv: kv[1]):
-        print(f"  {band:20s}: {r:8.1f} m")
+        print(f"  {band:20s},{r:8.1f} m")
 
     print(f"\nMedian range across {len(results)} bands: {median_range:.1f} m")
-    print("  (this is the citable method -- Valavi et al. 2019, used by blockCV::spatialAutoRange)")
     print(f"Max range across {len(results)} bands:    {max_range:.1f} m  (from '{max_band}')")
-    print("  (conservative variant -- no single band's autocorrelation crosses the buffer, at")
-    print("   the cost of a wider buffer strip and less retained data near fold boundaries)")
-
-    print(f"\nUsing MAX as the suggested BUFFER_RADIUS: {round(max_range):d}")
-    print("Set SUMMARY_METHOD = 'median' below and rerun if you want the less conservative,")
-    print("directly citable value instead.")
 
     suggested_buffer_radius = max_range if SUMMARY_METHOD == "max" else median_range
 
@@ -108,8 +99,6 @@ def main():
             "median_range_m": median_range,
             "max_range_m": max_range,
             "max_range_band": max_band,
-            "summary_method_used": SUMMARY_METHOD,
-            "suggested_buffer_radius_m": suggested_buffer_radius,
             "model": MODEL,
             "sample_size": SAMPLE_SIZE,
         },

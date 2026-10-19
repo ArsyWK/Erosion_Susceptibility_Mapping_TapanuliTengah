@@ -43,10 +43,9 @@ class PipelineState(TypedDict, total=False):
 
 def node_load_data(state: PipelineState) -> PipelineState:
     if DATA_NPZ.exists():
-        print("[load_data] cache hit, skipping raster reload")
+        print("[load_data] cache hit")
         return {"status": "data_loaded"}
 
-    print("[load_data] loading raster + building X, y, coords ...")
     X, y, coords, predictor_cols, raster, transform, crs, valid_mask = load_raster_dataset(
         GIS_RASTER, BAND_NAMES, TARGET_BAND
     )
@@ -60,10 +59,10 @@ def node_load_data(state: PipelineState) -> PipelineState:
 
 def node_spatial_split(state: PipelineState) -> PipelineState:
     if SPLIT_PKL.exists():
-        print("[spatial_split] cache hit, skipping split")
+        print("[spatial_split] cache hit")
         return {"status": "split_done"}
 
-    print("[spatial_split] running nested spatial split (verde + buffer) ...")
+    print("[spatial_split]")
     d = np.load(DATA_NPZ, allow_pickle=True)
     X, y, coords = d["X"], d["y"], d["coords"]
 
@@ -78,16 +77,16 @@ def node_spatial_split(state: PipelineState) -> PipelineState:
                  X_test=X_test, y_test=y_test, inner_folds=inner_folds),
             f,
         )
-    print(f"[spatial_split] train+val pixels: {len(y_trainval)}  |  test pixels: {len(y_test)}")
+    print(f"[spatial_split] {len(y_trainval)},test pixels: {len(y_test)}")
     return {"status": "split_done"}
 
 
 def node_tune_model(state: PipelineState) -> PipelineState:
     if MODEL_PATH.exists():
-        print("[tune_model] cache hit, skipping GridSearchCV")
+        print("[tune_model] cache hit")
         return {"status": "model_trained"}
 
-    print("[tune_model] running GridSearchCV over spatial train/val folds ...")
+    print("[tune_model]")
     with open(SPLIT_PKL, "rb") as f:
         split = pickle.load(f)
 
@@ -101,10 +100,10 @@ def node_tune_model(state: PipelineState) -> PipelineState:
 
 def node_evaluate(state: PipelineState) -> PipelineState:
     if METRICS_JSON.exists():
-        print("[evaluate] cache hit, skipping evaluation")
+        print("[evaluate] cache hit")
         return {"status": "evaluated"}
 
-    print("[evaluate] scoring on the held-out spatial test set (once) ...")
+    print("[evaluate]")
     with open(SPLIT_PKL, "rb") as f:
         split = pickle.load(f)
     d = np.load(DATA_NPZ, allow_pickle=True)
@@ -118,10 +117,10 @@ def node_evaluate(state: PipelineState) -> PipelineState:
 
 def node_predict_raster(state: PipelineState) -> PipelineState:
     if PRED_CLASS_TIF.exists() and PRED_PROBA_TIF.exists():
-        print("[predict_raster] cache hit, skipping full-raster prediction")
+        print("[predict_raster] cache hit")
         return {"status": "done"}
 
-    print("[predict_raster] predicting across the full raster ...")
+    print("[predict_raster]")
     d = np.load(DATA_NPZ, allow_pickle=True)
     valid_mask = d["valid_mask"]
     predictor_cols = list(d["predictor_cols"])

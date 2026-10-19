@@ -112,4 +112,3 @@ task = ee.batch.Export.image.toDrive(
 )
 
 task.start()
-print("Export started! Check console output above to confirm the band list and threshold.")
