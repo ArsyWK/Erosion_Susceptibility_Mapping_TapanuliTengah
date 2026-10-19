@@ -1,0 +1,19 @@
+{
+  "per_band_range_m": {
+    "dem": 24256.623541131587,
+    "slope": 10311.328791124137,
+    "aspect": 3309.48869004482,
+    "twi": 4091.5108899930233,
+    "spi": 3655.163391432272,
+    "rainfall": 40330.14381325719,
+    "plan_curvature": 4536.737542324941,
+    "profile_curvature": 40330.14380922419
+  },
+  "median_range_m": 7424.033166724539,
+  "max_range_m": 40330.14381325719,
+  "max_range_band": "rainfall",
+  "summary_method_used": "max",
+  "suggested_buffer_radius_m": 40330.14381325719,
+  "model": "spherical",
+  "sample_size": 3000
+}
