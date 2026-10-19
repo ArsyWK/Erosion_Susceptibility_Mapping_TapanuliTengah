@@ -103,7 +103,6 @@ def node_evaluate(state: PipelineState) -> PipelineState:
         print("[evaluate] cache hit")
         return {"status": "evaluated"}
 
-    print("[evaluate]")
     with open(SPLIT_PKL, "rb") as f:
         split = pickle.load(f)
     d = np.load(DATA_NPZ, allow_pickle=True)
@@ -120,7 +119,6 @@ def node_predict_raster(state: PipelineState) -> PipelineState:
         print("[predict_raster] cache hit")
         return {"status": "done"}
 
-    print("[predict_raster]")
     d = np.load(DATA_NPZ, allow_pickle=True)
     valid_mask = d["valid_mask"]
     predictor_cols = list(d["predictor_cols"])
